@@ -1,0 +1,10 @@
+# Data manipulation and analysis
+pandas
+numpy
+
+# Machine learning models
+scikit-learn
+
+# Data visualization (optional, but highly recommended)
+matplotlib
+seaborn

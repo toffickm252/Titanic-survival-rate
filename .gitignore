@@ -1,0 +1,54 @@
+# ----------------------------------------------------------------------
+# 1. Operating System/IDE Artifacts
+# ----------------------------------------------------------------------
+.DS_Store
+.vscode/*
+!/.vscode/settings.json  # Include settings if you need to enforce interpreter path (optional)
+!/.vscode/extensions.json # Include recommended extensions (optional)
+
+# ----------------------------------------------------------------------
+# 2. Python Environment & Build Files
+# ----------------------------------------------------------------------
+# Compiled files
+*.pyc
+__pycache__/
+*~$
+
+# Distribution/packaging
+.Python
+build/
+dist/
+venv/
+env/
+.env
+
+# Pip/Virtualenv/Conda
+pip-log.txt
+.venv
+# Conda environments (usually stored outside the project, but good practice)
+# You should NOT commit environment folders to GitHub.
+# If you created a local venv/conda environment inside the project folder:
+/env
+/venv
+
+# ----------------------------------------------------------------------
+# 3. Notebook and Data/ML Specific Files
+# ----------------------------------------------------------------------
+# Jupyter/IPython notebook checkpoint files
+.ipynb_checkpoints
+
+# Large data files (Generally should NOT be tracked in Git)
+*.csv
+*.xls
+*.xlsx
+*.json
+*.data
+*.zip
+*.tar.gz
+*.hdf5
+*.pkl
+*.joblib
+*.h5
+*.hd5
+*.bin
+*.model
