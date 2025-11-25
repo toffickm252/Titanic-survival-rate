@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 
 
 # Load the cleaned data
-df = pd.read_csv('titanic_cleaned.csv')
+df = pd.read_csv('C:\\Users\\Surface\\OneDrive\\Documentos\\GitHub\\Titanic-survival-rate\\data\\titanic_cleaned_new.csv')
 
 # Features and target variable
 X = df.drop(['Survived'], axis=1)   
@@ -28,9 +28,23 @@ report = classification_report(y_test, y_pred)
 print(report)
 
 # Save the trained model
-import joblib
+# import joblib
+# import os
+# os.makedirs('model', exist_ok=True)
+# joblib.dump(clf, 'model/random_forest_model.joblib')
+# # Save feature columns
+# joblib.dump(X.columns.tolist(), 'model/feature_columns.joblib')
+
+# save with pickle
+# ...existing code...
+
+# Efficient saving function
 import os
-os.makedirs('model', exist_ok=True)
-joblib.dump(clf, 'model/random_forest_model.joblib')
-# Save feature columns
-joblib.dump(X.columns.tolist(), 'model/feature_columns.joblib')
+import joblib
+
+def save_model_and_features(model, features, folder='model'):
+    os.makedirs(folder, exist_ok=True)
+    joblib.dump(model, os.path.join(folder, 'random_forest_new_model.joblib'))
+    joblib.dump(features, os.path.join(folder, 'feature_new_columns.joblib'))
+
+save_model_and_features(clf, X.columns.tolist())

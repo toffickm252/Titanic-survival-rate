@@ -1,4 +1,4 @@
-# Data manipulation and analysis
+## Data manipulation and analysis
 pandas
 numpy
 
@@ -8,3 +8,15 @@ scikit-learn
 # Data visualization (optional, but highly recommended)
 matplotlib
 seaborn
+
+# Model serialization
+joblib
+# Web framework for deployment
+flask
+flask-cors
+
+# deployment
+vercel-python
+gunicorn
+streamlit
+streamlit-option-menu

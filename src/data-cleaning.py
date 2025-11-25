@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 
 # inspect the data
-df = pd.read_csv('titanic.csv')
+df = pd.read_csv('C:\\Users\\Surface\\OneDrive\\Documentos\\GitHub\\Titanic-survival-rate\\data\\titanic.csv')
 print(df.head())
 
 # duplicates 
@@ -117,5 +117,7 @@ print(df.columns)
 # dtypes check
 print(df.dtypes)
 
+# drop columns
+df.drop(['Embarked_Q',"Embarked_S","Deck_B","Deck_C","Deck_D","Deck_E","Deck_F","Deck_G","Deck_T"], axis=1, inplace=True)
 # save cleaned data
-df.to_csv('titanic_cleaned.csv', index=False)
+df.to_csv('C:\\Users\\Surface\\OneDrive\\Documentos\\GitHub\\Titanic-survival-rate\\data\\titanic_cleaned_new.csv', index=False)
