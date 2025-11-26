@@ -115,7 +115,7 @@ print('Columns after dropping unnecessary ones:')
 print(df.columns)
 
 # dtypes check
-print(df.dtypes)
+# print(df.dtypes)
 
 # drop columns
 df.drop(['Embarked_Q',"Embarked_S","Deck_B","Deck_C","Deck_D","Deck_E","Deck_F","Deck_G","Deck_T"], axis=1, inplace=True)
