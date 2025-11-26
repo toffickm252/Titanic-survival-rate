@@ -37,18 +37,15 @@ pip-log.txt
 # Jupyter/IPython notebook checkpoint files
 .ipynb_checkpoints
 
-# Large data files (Generally should NOT be tracked in Git)
-*.csv
-*.xls
-*.xlsx
-*.json
-*.data
-*.zip
-*.tar.gz
-*.hdf5
-*.pkl
-*.joblib
-*.h5
-*.hd5
-*.bin
-*.model
+# # Large data files (Generally should NOT be tracked in Git)
+# *.xls
+# *.xlsx
+# *.data
+# *.zip
+# *.tar.gz
+# *.hdf5
+# *.joblib
+# *.h5
+# *.hd5
+# *.bin
+# *.model

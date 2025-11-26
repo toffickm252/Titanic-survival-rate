@@ -1,116 +1,91 @@
+import streamlit as st
 import joblib
 import numpy as np
 import pandas as pd
-from flask import Flask, render_template, request, jsonify
-from flask_cors import CORS
+import os
+import logging
 
-app = Flask(__name__)
-CORS(app)
-
-# --- CONFIGURATION ---
-# Ensure these file names match exactly what you uploaded
-MODEL_PATH = "src/model/random_forest_model.joblib"
-FEATURES_PATH = "src/model/feature_columns.joblib"
-
-# Preprocessing Constants (Derived from your training data)
-MEDIAN_AGE = 28.0
+# Constants from your data cleaning script
 AGE_UPPER_BOUND = 55.5
-MEDIAN_FARE = 14.45
 
-# Load Model and Feature Columns
-try:
-    model = joblib.load(MODEL_PATH)
-    expected_features = joblib.load(FEATURES_PATH)
-    print("Model and Features loaded successfully!")
-    print(f"Expecting {len(expected_features)} features: {expected_features}")
-except Exception as e:
-    print(f"CRITICAL ERROR: {e}")
-    model = None
-    expected_features = []
-
-@app.route("/")
-def home():
-    # This looks for 'index.html' inside the 'templates' folder
-    return render_template("index.html")
-
-@app.route("/predict", methods=["POST"])
-def predict():
-    if not model:
-        return jsonify({"error": "Model not loaded properly"}), 500
+@st.cache_resource
+def load_artifacts():
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    model_path = os.getenv("MODEL_PATH", os.path.join(base_dir, "..", "model", "random_forest_model.pkl"))
+    feature_path = os.getenv("FEATURE_PATH", os.path.join(base_dir, "..", "model", "feature_columns.pkl"))
 
     try:
-        # 1. Get Raw Data from Frontend
-        data = request.get_json()
-        
-        # 2. Preprocess Data (Replicating your training logic)
-        
-        # --- Numeric Inputs ---
-        pclass = int(data.get("Pclass", 3))
-        sibsp = int(data.get("SibSp", 0))
-        parch = int(data.get("Parch", 0))
-        
-        # --- Age: Impute & Cap ---
-        raw_age = data.get("Age")
-        age = float(raw_age) if raw_age not in [None, ""] else MEDIAN_AGE
-        # Cap age at 55.5 (from your IQR analysis)
-        age_capped = min(age, AGE_UPPER_BOUND)
-        
-        # --- Fare: Impute & Log Transform ---
-        raw_fare = data.get("Fare")
-        fare = float(raw_fare) if raw_fare not in [None, ""] else MEDIAN_FARE
-        # Apply log(1+x)
-        fare_log = np.log1p(fare)
-        
-        # --- Sex: Binary Encoding ---
-        sex_str = str(data.get("Sex", "")).lower()
-        sex_encoded = 1 if sex_str == "female" else 0
-        
-        # --- Embarked: One-Hot Encoding ---
-        embarked = str(data.get("Embarked", "S")).upper()
-        embarked_q = 1 if embarked == "Q" else 0
-        embarked_s = 1 if embarked == "S" else 0
-        
-        # --- Cabin: Feature Engineering ---
-        cabin_str = str(data.get("Cabin", "")).strip()
-        has_cabin = 1 if cabin_str else 0
-        
-        # Extract Deck (First letter)
-        deck_letter = cabin_str[0].upper() if has_cabin else "U"
-        
-        # 3. Build the Feature Vector
-        # We create a dictionary to map calculated values to the expected column names
-        features_dict = {
-            'Pclass': pclass,
-            'SibSp': sibsp,
-            'Parch': parch,
-            'Has_Cabin': has_cabin,
-            'Age_capped': age_capped,
-            'Fare_log': fare_log,
-            'Sex_encoded': sex_encoded,
-            'Embarked_Q': embarked_q,
-            'Embarked_S': embarked_s,
-            # Decks: Logic to set the specific deck bit to 1
-            f'Deck_{deck_letter}': 1 
-        }
+        model = joblib.load(model_path)
+        features = joblib.load(feature_path)
+        return model, features
+    except Exception as e:
+        logging.error(f"Error loading artifacts: {e}")
+        st.error("Failed to load model artifacts. Please check the logs.")
+        st.stop()
 
-        # Create the final ordered list based on 'feature_columns.joblib'
-        # If a deck column (e.g., Deck_B) is not in our dict, it defaults to 0
-        final_input = [features_dict.get(col, 0) for col in expected_features]
-        
-        # Convert to 2D array for prediction
-        features_np = np.array([final_input])
-        
-        # 4. Make Prediction
-        probability = model.predict_proba(features_np)[0][1]
-        prediction = "Survived" if probability > 0.5 else "Did Not Survive"
-        
-        return jsonify({
-            "prediction": prediction,
-            "probability": round(probability * 100, 2)
-        })
+
+model, feature_columns = load_artifacts()
+
+st.title("Titanic Survival Prediction")
+
+# --- User Inputs ---
+pclass = st.selectbox("Passenger Class (Pclass)", [1, 2, 3])
+sex = st.selectbox("Sex", ["male", "female"])
+age = st.number_input("Age", min_value=0.0, max_value=100.0, value=28.0, step=1.0)
+sibsp = st.number_input("Siblings/Spouses Aboard (SibSp)", min_value=0, value=0, step=1)
+parch = st.number_input("Parents/Children Aboard (Parch)", min_value=0, value=0, step=1)
+fare = st.number_input("Fare", min_value=0.0, value=14.45, step=1.0)
+embarked = st.selectbox("Port of Embarkation", ["S", "C", "Q"])
+cabin = st.text_input("Cabin (e.g., C85, or leave blank if unknown)")
+
+# --- Prediction Logic ---
+if st.button("Predict"):
+    # --- 1. Preprocessing ---
+    try:
+        # Create a dictionary to hold all feature values, initialized to 0
+        feature_dict = {col: 0 for col in feature_columns}
+
+        # --- 2. Populate features from user input ---
+
+        # Basic numeric features
+        feature_dict['Pclass'] = pclass
+        feature_dict['SibSp'] = sibsp
+        feature_dict['Parch'] = parch
+
+        # Processed numeric features
+        feature_dict['Age_capped'] = min(age, AGE_UPPER_BOUND)
+        feature_dict['Fare_log'] = np.log1p(fare)
+
+        # Encoded categorical features
+        feature_dict['Sex_encoded'] = 1 if sex == "female" else 0
+
+        # Embarked (One-Hot Encoded)
+        if f"Embarked_{embarked}" in feature_dict:
+            feature_dict[f"Embarked_{embarked}"] = 1
+
+        # Cabin and Deck features
+        has_cabin = 1 if cabin.strip() else 0
+        feature_dict['Has_Cabin'] = has_cabin
+        if has_cabin:
+            deck_letter = cabin.strip()[0].upper()
+            deck_feature = f"Deck_{deck_letter}"
+            if deck_feature in feature_dict:
+                feature_dict[deck_feature] = 1
+
+        # --- 3. Create DataFrame ---
+        # Ensure the order of columns matches the training data
+        input_df = pd.DataFrame([feature_dict])[feature_columns]
+
+        # --- 4. Make Prediction ---
+        pred = model.predict(input_df)[0]
+        prob = model.predict_proba(input_df)[0][1]
+
+        label = "Survived" if pred == 1 else "Did Not Survive"
+
+        st.success(label)
+        st.info(f"Survival probability: {prob*100:.2f}%")
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
-
-if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+        logging.error(f"Prediction error: {e}")
+        st.error("An error occurred during prediction. Please check the input values and try again.")
+        st.stop()
